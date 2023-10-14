@@ -1,0 +1,30 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": ".NET Core Launch (Debug)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "debug-build",
+      "program": "${workspaceFolder}/Owl.mht.console/bin/Debug/net7.0/Owl.mht.console.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "console": "internalConsole",
+      "stopAtEntry": false,
+      "internalConsoleOptions": "openOnSessionStart",
+      "externalConsole": true
+    },
+    {
+      "name": ".NET Core Launch (Relase)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "release-build",
+      "program": "${workspaceFolder}/Owl.mht.console/bin/Debug/net7.0/Owl.mht.console.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "console": "internalConsole",
+      "stopAtEntry": false,
+      "internalConsoleOptions": "openOnSessionStart"
+    }
+  ]
+}

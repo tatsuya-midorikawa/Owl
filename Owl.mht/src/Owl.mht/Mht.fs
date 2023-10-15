@@ -25,6 +25,7 @@ module Mht =
       then raise (exn "boundary not found")
       else boundary
 
+  // WIP
   let load (mht: MhtFile) =
     let boundary = search_boundary mht
     let mht = match mht with MhtFile s -> s

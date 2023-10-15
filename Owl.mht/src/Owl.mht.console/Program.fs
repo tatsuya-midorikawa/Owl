@@ -19,6 +19,6 @@ mht
 |> printfn "%s"
 
 mht
-|> Mht.load
+|> Mht.split
 |> Seq.take 2
 |> printfn "%A"

@@ -25,7 +25,7 @@ module Mht =
       then raise (exn "boundary not found")
       else $"--{boundary}"
 
-  let enumerate (mht: MhtFile) =
+  let split (mht: MhtFile) =
     let boundary = search_boundary mht
     let mht = match mht with MhtFile s -> s
     let lines = System.IO.File.ReadLines mht

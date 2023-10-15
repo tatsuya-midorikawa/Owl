@@ -20,3 +20,5 @@ mht
 
 mht
 |> Mht.load
+|> Seq.take 2
+|> printfn "%A"

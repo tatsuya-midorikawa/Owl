@@ -23,13 +23,20 @@ module Mht =
 
     if System.String.IsNullOrWhiteSpace boundary
       then raise (exn "boundary not found")
-      else boundary
+      else $"--{boundary}"
 
-  // WIP
-  let load (mht: MhtFile) =
+  let enumerate (mht: MhtFile) =
     let boundary = search_boundary mht
     let mht = match mht with MhtFile s -> s
     let lines = System.IO.File.ReadLines mht
-    use a = lines.GetEnumerator()
-    a.MoveNext() |> ignore
-    a.Current |> printfn "%s"
+    let acc = System.Text.StringBuilder(1_024)
+    seq {
+      use e = lines.GetEnumerator()
+      while e.MoveNext() do
+        if e.Current = boundary
+          then 
+            yield acc.ToString()
+            acc.Clear() |> ignore
+          else
+            acc.Append e.Current |> ignore
+    }

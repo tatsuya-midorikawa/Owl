@@ -14,11 +14,14 @@ open System.Text.RegularExpressions
 let mht = 
   Mht.fpath "../assets/sample.mht"
 
-mht
-|> Mht.search_boundary
-|> printfn "%s"
+// mht
+// |> Mht.search_boundary
+// |> printfn "%s"
 
 mht
 |> Mht.split
-|> Seq.take 2
+|> Seq.take 1
 |> printfn "%A"
+
+mht
+|> Mht.load

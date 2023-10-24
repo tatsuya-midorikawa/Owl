@@ -85,13 +85,22 @@ module Mht =
       let body = System.Text.StringBuilder(512)
       let mutable location = ""
       let mutable is_header = true
+      
+      System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance)
+      let mutable encode = System.Text.Encoding.UTF8
 
       for l in lines do
-        if l.StartsWith "Content-Location:"
-          then location <- l.Replace("Content-Location:", "").Replace(" ", "")
 
         if is_header
           then
+            let m = Regex.Matches(l, "Content-Location:\s*(.*)")
+            if 0 < m.Count
+              then location <- m[0].Groups[1].Value
+
+            let m = Regex.Matches(l, "Content-Type:.*?charset=\"(.*?)\"")
+            if 0 < m.Count
+              then encode <- System.Text.Encoding.GetEncoding(m[0].Groups[1].Value)
+
             if l = System.String.Empty
               then is_header <- false
               else header.Append(l).Append(System.Environment.NewLine) |> ignore

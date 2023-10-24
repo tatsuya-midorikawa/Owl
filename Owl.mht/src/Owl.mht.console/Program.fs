@@ -25,3 +25,4 @@ mht
 
 mht
 |> Mht.load
+|> printfn "%A"

@@ -2,8 +2,39 @@ namespace Owl.mht
 open System.Text.RegularExpressions
 
 type [<Struct>] MhtFile = internal MhtFile of string
+type MhtPage = internal { header: string; location: string; body: string }
+type ContentTransferEncode =
+  | bit7 = 0              // 7bit
+  | bit8 = 1              // 8bit
+  | binary = 2            // binary
+  | base64 = 3            // base64
+  | quoted_printable = 4  // quoted-printable
+  
+[<RequireQualifiedAccess>]
+type MimeType =
+  | application of content: MhtPage
+  | audio of content: MhtPage
+  | example of content: MhtPage
+  | font of content: MhtPage
+  | image of content: MhtPage * encode: ContentTransferEncode
+  | model of content: MhtPage
+  | text of content: MhtPage * charset: System.Text.Encoding
+  | video of content: MhtPage
+  | message of content: MhtPage
+  | multipart of content: MhtPage
+
 
 module Mht =
+  let private to_ctenc (value: string) =
+    value.Replace("Content-Transfer-Encoding:", "").Replace(" ", "")
+    |> function
+      | "7bit" -> ContentTransferEncode.bit7
+      | "8bit" -> ContentTransferEncode.bit8
+      | "binary" -> ContentTransferEncode.binary
+      | "base64" -> ContentTransferEncode.base64
+      | "quoted_printable" -> ContentTransferEncode.quoted_printable
+      | _ -> raise (exn "Invalid encode type")
+
   let fpath (path: string) =
     if not (path.EndsWith ".mht") 
       then raise (invalidArg "Invalid file" $"path is not mht file: {path}")
@@ -45,14 +76,7 @@ module Mht =
   let split (MhtFile mht) = split' mht
 
   let load (MhtFile mht) =
-    let xs = split' mht
-    let ys =
-      xs
-      |> Seq.take 1
-      |> Seq.toArray
-    let zs =
-      ys[0].Split(System.Environment.NewLine)
-    zs
-    |> Array.iter (printfn "%s")
+    // Skip header field
+    let pages = split' mht |> Seq.skip 1
 
-    ()
+    pages

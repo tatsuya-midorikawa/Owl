@@ -9,9 +9,9 @@ type ContentTransferEncode =
   | binary = 2            // binary
   | base64 = 3            // base64
   | quoted_printable = 4  // quoted-printable
-  
+
 [<RequireQualifiedAccess>]
-type MimeType =
+type Mime =
   | application of content: MhtPage
   | audio of content: MhtPage
   | example of content: MhtPage
@@ -22,7 +22,6 @@ type MimeType =
   | video of content: MhtPage
   | message of content: MhtPage
   | multipart of content: MhtPage
-
 
 module Mht =
   let private to_ctenc (value: string) =
@@ -79,4 +78,27 @@ module Mht =
     // Skip header field
     let pages = split' mht |> Seq.skip 1
 
+    let parse (s: string) =
+      let lines = s.Split(System.Environment.NewLine)
+
+      let header = System.Text.StringBuilder(256)
+      let body = System.Text.StringBuilder(512)
+      let mutable location = ""
+      let mutable is_header = true
+
+      for l in lines do
+        if l.StartsWith "Content-Location:"
+          then location <- l.Replace("Content-Location:", "").Replace(" ", "")
+
+        if is_header
+          then
+            if l = System.String.Empty
+              then is_header <- false
+              else header.Append(l).Append(System.Environment.NewLine) |> ignore
+          else
+            body.Append(l).Append(System.Environment.NewLine) |> ignore
+
+      { header = header.ToString(); body = body.ToString(); location = location }
+
     pages
+    |> Seq.map parse

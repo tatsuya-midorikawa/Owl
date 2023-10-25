@@ -103,7 +103,7 @@ module Mht =
     seq {
       use e = lines.GetEnumerator()
       while e.MoveNext() do
-        if e.Current = boundary
+        if e.Current.StartsWith boundary
           then 
             yield acc.ToString()
             acc.Clear() |> ignore
@@ -126,7 +126,6 @@ module Mht =
       let mutable is_header = true
       
       System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance)
-      let mutable encode = System.Text.Encoding.UTF8
 
       for l in lines do
 
@@ -135,10 +134,6 @@ module Mht =
             let m = Regex.Matches(l, "Content-Location:\s*(.*)")
             if 0 < m.Count
               then location <- m[0].Groups[1].Value
-
-            let m = Regex.Matches(l, "Content-Type:.*?charset=\"(.*?)\".*")
-            if 0 < m.Count
-              then encode <- System.Text.Encoding.GetEncoding(m[0].Groups[1].Value)
 
             if l = System.String.Empty
               then is_header <- false

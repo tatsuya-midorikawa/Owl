@@ -22,15 +22,13 @@ try
     match page with
     // text データの場合, 指定のエンコードでファイル保存する
     | Mime.text (content, encode) ->  
-      let dir = combine output_dir "src"
-      use fs = File.Create(combine dir content.location)
+      use fs = File.Create(combine output_dir content.location)
       fs.Write (encode.GetBytes content.body)
     | Mime.image (content, encode) ->
       match encode with
       | ContentTransferEncode.base64 ->
-        let dir = combine output_dir "src"
         content.body 
-        |> (base64 >> decode >> write (combine dir content.location))
+        |> (base64 >> decode >> write (combine output_dir content.location))
       | _ -> raise (exn "Not supported encoding types yet.")
     | _ -> raise (exn "Not supported MIMEs yet.")
 with

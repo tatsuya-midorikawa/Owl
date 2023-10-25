@@ -400,3 +400,4 @@ FodyWeavers.xsd
 .DS_Store
 
 */src/**/*.jpg
+Owl.mht/src/out/

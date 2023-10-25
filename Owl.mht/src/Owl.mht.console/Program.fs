@@ -23,12 +23,12 @@ let mht =
 // |> Seq.take 1
 // |> printfn "%A"
 
-mht
-|> Mht.load
-// |> Seq.take 2
-|> Seq.skip 6
-|> Seq.map Mime.parse
-|> printfn "%A"
+// mht
+// |> Mht.load
+// // |> Seq.take 2
+// |> Seq.skip 6
+// |> Seq.map Mime.parse
+// |> printfn "%A"
 
 // let a = "Content-Type: text/html; charset=\"UTF-8\""
 // let b = "Content-Type: image/jpeg"

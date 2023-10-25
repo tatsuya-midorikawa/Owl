@@ -23,21 +23,34 @@ let mht =
 // |> Seq.take 1
 // |> printfn "%A"
 
-// mht
-// |> Mht.load
-// |> printfn "%A"
+mht
+|> Mht.load
+// |> Seq.take 2
+|> Seq.skip 6
+|> Seq.map Mime.parse
+|> printfn "%A"
 
-let a = "Content-Type: text/html; charset=\"UTF-8\""
-let b = "Content-Type: image/jpeg"
-let c = "Content-Type: image/quoted-printable; charset=\"UTF-8\""
+// let a = "Content-Type: text/html; charset=\"UTF-8\""
+// let b = "Content-Type: image/jpeg"
+// let c = "Content-Type: image/quoted-printable; charset=\"UTF-8\""
 
-let m = Regex.Matches(a, "Content-Type:\s*((application|audio|example|font|image|model|text|video|message|multipart)/([a-zA-Z-]*)).*")
-if 0 < m.Count
-  then
-    m[0].Groups[1].Value |> printfn "%s"  // image/jpeg
-    m[0].Groups[2].Value |> printfn "%s"  // image
-    m[0].Groups[3].Value |> printfn "%s"  // jpeg
-  else
-    printfn "not found"
+// let m = Regex.Matches(a, "Content-Type:\s*((application|audio|example|font|image|model|text|video|message|multipart)/([a-zA-Z-]*)).*")
+// if 0 < m.Count
+//   then
+//     m[0].Groups[1].Value |> printfn "%s"  // image/jpeg
+//     m[0].Groups[2].Value |> printfn "%s"  // image
+//     m[0].Groups[3].Value |> printfn "%s"  // jpeg
+//   else
+//     printfn "not found"
+
+
+// let x = "Content-Transfer-Encoding: base64;"
+// let mc = Regex.Matches(x, "Content-Transfer-Encoding:\s*(7bit|8bit|binary|base64|quoted_printable).*")
+// if 0 < mc.Count
+//   then
+//     mc[0].Groups[1].Value |> printfn "%s"
+//   else
+//     printfn "not found"
+
 
 printfn "=== end ==="

@@ -1,4 +1,4 @@
-namespace Owl.mht
+namespace rec Owl.mht
 open System.Text.RegularExpressions
 
 type [<Struct>] MhtFile = internal MhtFile of string
@@ -24,8 +24,32 @@ type Mime =
   | multipart of content: MhtPage     // TBD
 with
   static member parse (page: MhtPage) =
-    let rec loop = function
-      | [] -> raise (exn "Mime-type not found")
+    let rec search_charset = function
+      | [] -> System.Text.Encoding.UTF8
+      | x::tail ->
+        let mc = Regex.Matches(x, "Content-Type:.*?charset=\"(.*?)\".*")
+        if 0 < mc.Count
+          then System.Text.Encoding.GetEncoding(mc[0].Groups[1].Value)
+          else search_charset tail
+
+    let rec search_ctenc = function
+      | [] -> raise (exn "ContentTransferEncode is not found")
+      | x::tail ->
+        let mc = Regex.Matches(x, "Content-Transfer-Encoding:\s*(7bit|8bit|binary|base64|quoted_printable).*")
+        if 0 < mc.Count
+          then
+            match mc[0].Groups[1].Value with
+            | "7bit" -> ContentTransferEncode.bit7
+            | "8bit" -> ContentTransferEncode.bit8
+            | "binary" -> ContentTransferEncode.binary
+            | "base64" -> ContentTransferEncode.base64
+            | "quoted_printable" -> ContentTransferEncode.quoted_printable
+            | _ -> raise (exn "Invalid encode type")
+          else search_ctenc tail
+
+    let rec loop (xs: string list) =
+      match xs with
+      | [] -> raise (exn "Mime-type is not found")
       | x::tail ->
         let mc = Regex.Matches(x, "Content-Type:\s*((application|audio|example|font|image|model|text|video|message|multipart)/([a-zA-Z-]*)).*")
         if 0 < mc.Count
@@ -35,35 +59,20 @@ with
             | "audio" -> Mime.audio page
             | "example" -> Mime.example page
             | "font" -> Mime.font page
-            | "image" -> Mime.image
-              // header 情報から to_ctenc を使って ContentTransferEncode を拾う
-              (page)
+            | "image" -> Mime.image (page, search_ctenc xs)
             | "model" -> Mime.model page
-            | "text" ->
-              // header 情報から System.Text.Encoding.GetEncoding を使って Encoding 情報を拾う
-              Mime.text (page)
+            | "text" -> Mime.text (page, search_charset xs)
             | "video" -> Mime.video page
             | "message" -> Mime.message page
             | "multipart" -> Mime.multipart page
             | _ -> raise (exn "Invalid Mime-type")
           else loop tail
       
-    for l in page.header.Split(System.Environment.NewLine) do
-      ()
-    ()
+    page.header.Split(System.Environment.NewLine)
+    |> (Array.toList >> loop)
 
 
 module Mht =
-  let private to_ctenc (value: string) =
-    value.Replace("Content-Transfer-Encoding:", "").Replace(" ", "")
-    |> function
-      | "7bit" -> ContentTransferEncode.bit7
-      | "8bit" -> ContentTransferEncode.bit8
-      | "binary" -> ContentTransferEncode.binary
-      | "base64" -> ContentTransferEncode.base64
-      | "quoted_printable" -> ContentTransferEncode.quoted_printable
-      | _ -> raise (exn "Invalid encode type")
-
   let fpath (path: string) =
     if not (path.EndsWith ".mht") 
       then raise (invalidArg "Invalid file" $"path is not mht file: {path}")
@@ -127,7 +136,7 @@ module Mht =
             if 0 < m.Count
               then location <- m[0].Groups[1].Value
 
-            let m = Regex.Matches(l, "Content-Type:.*?charset=\"(.*?)\"")
+            let m = Regex.Matches(l, "Content-Type:.*?charset=\"(.*?)\".*")
             if 0 < m.Count
               then encode <- System.Text.Encoding.GetEncoding(m[0].Groups[1].Value)
 

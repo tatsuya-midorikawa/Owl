@@ -35,9 +35,13 @@ with
             | "audio" -> Mime.audio page
             | "example" -> Mime.example page
             | "font" -> Mime.font page
-            | "image" -> Mime.image (page)
+            | "image" -> Mime.image
+              // header 情報から to_ctenc を使って ContentTransferEncode を拾う
+              (page)
             | "model" -> Mime.model page
-            | "text" -> Mime.text (page)
+            | "text" ->
+              // header 情報から System.Text.Encoding.GetEncoding を使って Encoding 情報を拾う
+              Mime.text (page)
             | "video" -> Mime.video page
             | "message" -> Mime.message page
             | "multipart" -> Mime.multipart page

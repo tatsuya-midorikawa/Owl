@@ -11,3 +11,6 @@ module Base64 =
   let decode (Base64String src) =
     Base64Data (System.Convert.FromBase64String src)
     
+  let write (save_as: string) (Base64Data src) =
+    use fs = System.IO.File.Create(save_as)
+    fs.Write src

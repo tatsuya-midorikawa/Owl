@@ -2,7 +2,7 @@ namespace rec Owl.mht
 open System.Text.RegularExpressions
 
 type [<Struct>] MhtFile = internal MhtFile of string
-type MhtPage = internal { header: string; location: string; body: string }
+type MhtPage = { header: string; location: string; body: string }
 type ContentTransferEncode =
   | bit7 = 0              // 7bit
   | bit8 = 1              // 8bit

@@ -12,16 +12,42 @@ type ContentTransferEncode =
 
 [<RequireQualifiedAccess>]
 type Mime =
-  | application of content: MhtPage
-  | audio of content: MhtPage
-  | example of content: MhtPage
-  | font of content: MhtPage
+  | application of content: MhtPage   // TBD
+  | audio of content: MhtPage         // TBD
+  | example of content: MhtPage       // TBD
+  | font of content: MhtPage          // TBD
   | image of content: MhtPage * encode: ContentTransferEncode
-  | model of content: MhtPage
+  | model of content: MhtPage         // TBD
   | text of content: MhtPage * charset: System.Text.Encoding
-  | video of content: MhtPage
-  | message of content: MhtPage
-  | multipart of content: MhtPage
+  | video of content: MhtPage         // TBD
+  | message of content: MhtPage       // TBD
+  | multipart of content: MhtPage     // TBD
+with
+  static member parse (page: MhtPage) =
+    let rec loop = function
+      | [] -> raise (exn "Mime-type not found")
+      | x::tail ->
+        let mc = Regex.Matches(x, "Content-Type:\s*((application|audio|example|font|image|model|text|video|message|multipart)/([a-zA-Z-]*)).*")
+        if 0 < mc.Count
+          then
+            match mc[0].Groups[2].Value with
+            | "application" -> Mime.application page
+            | "audio" -> Mime.audio page
+            | "example" -> Mime.example page
+            | "font" -> Mime.font page
+            | "image" -> Mime.image (page)
+            | "model" -> Mime.model page
+            | "text" -> Mime.text (page)
+            | "video" -> Mime.video page
+            | "message" -> Mime.message page
+            | "multipart" -> Mime.multipart page
+            | _ -> raise (exn "Invalid Mime-type")
+          else loop tail
+      
+    for l in page.header.Split(System.Environment.NewLine) do
+      ()
+    ()
+
 
 module Mht =
   let private to_ctenc (value: string) =

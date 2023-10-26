@@ -1,13 +1,15 @@
 ﻿open Owl.mht
 open System.IO
+open System.Diagnostics
 open System.Text.RegularExpressions
+open System.Threading.Tasks
 
 let debug_log msg = System.Diagnostics.Debug.WriteLine(msg)
 let combine a b = Path.Combine(a, b)
 let indicator i =
-  System.Console.SetCursorPosition(0, System.Console.CursorTop);
+  System.Console.Clear()
   let n = i % 4
-  printfn $"Processing%s{System.String('.', n)}{System.String(' ', 3 - n)}"
+  System.Console.WriteLine $"Processing%s{System.String('.', n)}{System.String(' ', 3 - n)}"
 
 // 出力フォルダの作成
 // もしすでに作成されている場合、再起的に削除してから再作成する
@@ -26,15 +28,23 @@ Directory.CreateDirectory(pslide_dir) |> ignore
 let args = System.Environment.GetCommandLineArgs()
 debug_log $"%A{args}"
 
+let sw = Stopwatch()
+sw.Start()
+
 try
   let mht = Mht.fpath args[1]
   let pages = mht |> Mht.load |> Seq.map Mime.parse
   let src_pattern = "(.*src=\")(.*\.JPEG)(\".*)"
   let slide_pattern = "(.*href=\")(slide[0-9]*\.htm)(\".*)"
   let pslide_pattern = "(.*href=\")(pslide[0-9]*\.htm)(\".*)"
-  let mutable i = 0
+  let mutable fin = false
+  let t = Task.Run(fun () -> 
+    let mutable i = 0
+    while not fin do
+      indicator i; i <- i + 1
+      Task.Delay(1000).Wait() )
+
   for page: Mime in pages do
-    indicator i; i <- i + 1
     match page with
     // text データの場合, 指定のエンコードでファイル保存する
     | Mime.text (content, encode) ->
@@ -61,5 +71,13 @@ try
         |> (base64 >> decode >> write (combine img_dir content.location))
       | _ -> raise (exn "Not supported encoding types yet.")
     | _ -> raise (exn "Not supported MIMEs yet.")
+  fin <- true
 with
   e -> printfn "%s" e.Message
+
+sw.Stop()
+System.Console.Clear()
+printfn "### Finished ###"
+printfn $"Processed time: {sw.Elapsed}"
+printfn "--- press any key."
+System.Console.ReadKey() |> ignore

@@ -4,6 +4,10 @@ open System.Text.RegularExpressions
 
 let debug_log msg = System.Diagnostics.Debug.WriteLine(msg)
 let combine a b = Path.Combine(a, b)
+let indicator i =
+  System.Console.SetCursorPosition(0, System.Console.CursorTop);
+  let n = i % 4
+  printfn $"Processing%s{System.String('.', n)}{System.String(' ', 3 - n)}"
 
 // 出力フォルダの作成
 // もしすでに作成されている場合、再起的に削除してから再作成する
@@ -28,7 +32,9 @@ try
   let src_pattern = "(.*src=\")(.*\.JPEG)(\".*)"
   let slide_pattern = "(.*href=\")(slide[0-9]*\.htm)(\".*)"
   let pslide_pattern = "(.*href=\")(pslide[0-9]*\.htm)(\".*)"
+  let mutable i = 0
   for page: Mime in pages do
+    indicator i; i <- i + 1
     match page with
     // text データの場合, 指定のエンコードでファイル保存する
     | Mime.text (content, encode) ->

@@ -1,4 +1,5 @@
 ﻿open Owl.mht
+open Owl.mht.sonic
 open System.IO
 open System.Text.RegularExpressions
 
@@ -11,8 +12,8 @@ open System.Text.RegularExpressions
 // }
 // |> System.Threading.Tasks.Task.WaitAll
 
-let mht = 
-  Mht.fpath "../assets/sample.mht"
+// let mht = 
+//   Mht.fpath "../assets/sample.mht"
 
 // mht
 // |> Mht.search_boundary
@@ -52,13 +53,51 @@ let mht =
 //   else
 //     printfn "not found"
 
-let src = "<a class=\"left33 align-center\" title=\"Return to first slide\" href=\"pslide0001.htm\">Return to first slide</a>"
-let pattern = "(.*href=\")(pslide.*\.htm)(\".*)"
-let result = Regex.Replace(src, pattern, "$1pslide/$2$3")
+// let src = "<a class=\"left33 align-center\" title=\"Return to first slide\" href=\"pslide0001.htm\">Return to first slide</a>"
+// let pattern = "(.*href=\")(pslide.*\.htm)(\".*)"
+// let result = Regex.Replace(src, pattern, "$1pslide/$2$3")
 
-Regex.IsMatch ("pslide0001.htm", "pslide[0-9]*\.htm")
-|> printfn "%b"
+// Regex.IsMatch ("pslide0001.htm", "pslide[0-9]*\.htm")
+// |> printfn "%b"
 
-printfn "%s" result
+// printfn "%s" result
+
+
+let mht = Path.GetFullPath "../assets/sample.mht"
+let handle = Mht.open_read mht
+let output_dir = Path.GetFullPath "./out"
+
+let combine a b = Path.Combine(a, b)
+
+
+
+
+
+
+
+if Directory.Exists output_dir
+  then Directory.Delete(path = output_dir, recursive = true)
+Directory.CreateDirectory(output_dir) |> ignore
+
+try
+  let pages = Mht.read handle
+  for page in pages do
+    match Mht.get_mime page.header with
+    | "text" ->
+      let location = Mht.get_location page.header
+      let charset = Mht.get_charset page.header
+      use fs = File.Create(combine output_dir location)
+      fs.Write (charset.GetBytes page.body)
+    | "image" ->
+      let location = Mht.get_location page.header
+      match Mht.get_ctencode page.header with
+      | "base64" ->
+        page.body
+        |> (base64 >> decode >> write (combine output_dir location))
+      | _ -> ()
+    | _ -> ()
+finally
+  ()
+
 
 printfn "=== end ==="

@@ -3,6 +3,7 @@
     <TargetFramework>net7.0</TargetFramework>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
     <DebugType>embedded</DebugType>
+    <PublishTrimmed>true</PublishTrimmed>
   </PropertyGroup>
   <ItemGroup>
   </ItemGroup>

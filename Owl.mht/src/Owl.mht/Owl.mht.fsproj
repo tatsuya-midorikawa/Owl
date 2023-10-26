@@ -10,5 +10,6 @@
     <Compile Include="Base64.fs" />
     <Compile Include="File.fs" />
     <Compile Include="Mht.fs" />
+    <Compile Include="MhtSonic.fs" />
   </ItemGroup>
 </Project>

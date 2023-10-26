@@ -52,5 +52,13 @@ let mht =
 //   else
 //     printfn "not found"
 
+let src = "<a class=\"left33 align-center\" title=\"Return to first slide\" href=\"pslide0001.htm\">Return to first slide</a>"
+let pattern = "(.*href=\")(pslide.*\.htm)(\".*)"
+let result = Regex.Replace(src, pattern, "$1pslide/$2$3")
+
+Regex.IsMatch ("pslide0001.htm", "pslide[0-9]*\.htm")
+|> printfn "%b"
+
+printfn "%s" result
 
 printfn "=== end ==="

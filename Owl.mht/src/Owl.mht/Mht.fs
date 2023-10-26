@@ -1,5 +1,27 @@
-namespace rec Owl.mht
+namespace Owl.mht
 open System.Text.RegularExpressions
+
+// [<RequireQualifiedAccess>]
+// type Document =
+//   | application of content: string   // TBD
+//
+//
+// module M =
+//   open System.IO
+//
+//   let readl path = 
+//     let path = Path.GetFullPath path
+//     if not <| File.Exists path then raise (exn $"The file is not found: %s{path}")
+//
+//     seq {
+//       use stream = File.OpenRead path
+//       let cache = ResizeArray<byte>(512)
+//       yield 0
+//     }
+
+
+
+
 
 type [<Struct>] MhtFile = internal MhtFile of string
 type MhtPage = { header: string; location: string; body: string }

@@ -66,18 +66,33 @@ open System.Text.RegularExpressions
 let mht = Path.GetFullPath "../assets/sample.mht"
 let handle = Mht.open_read mht
 let output_dir = Path.GetFullPath "./out"
-
-let combine a b = Path.Combine(a, b)
-
-
-
-
-
-
+let img_dir = Path.GetFullPath "./out/img"
+let slide_dir = Path.GetFullPath "./out/slide"
+let pslide_dir = Path.GetFullPath "./out/pslide"
 
 if Directory.Exists output_dir
   then Directory.Delete(path = output_dir, recursive = true)
 Directory.CreateDirectory(output_dir) |> ignore
+Directory.CreateDirectory(img_dir) |> ignore
+Directory.CreateDirectory(slide_dir) |> ignore
+Directory.CreateDirectory(pslide_dir) |> ignore
+
+
+
+let combine a b = Path.Combine(a, b)
+
+let inline is_pslide (location: string) = Regex.IsMatch (location, "pslide[0-9]*\.htm")
+let inline is_slide (location: string) = Regex.IsMatch (location, "slide[0-9]*\.htm")
+let inline replace (input: string, pattern: string, replacement: string) = Regex.Replace(input, pattern, replacement)
+
+let [<Literal>] src_pattern = "(.*src=\")(.*\.JPEG)(\".*)"
+let [<Literal>] href_pattern = "(.*href=\")(.*\.JPEG)(\".*)"
+let [<Literal>] slide_pattern = "(.*href=\")(slide[0-9]*\.htm)(\".*)"
+let [<Literal>] pslide_pattern = "(.*href=\")(pslide[0-9]*\.htm)(\".*)"
+
+let inline img_save_as dst = base64 >> decode >> write dst
+
+
 
 try
   let pages = Mht.read handle
@@ -86,14 +101,31 @@ try
     | "text" ->
       let location = Mht.get_location page.header
       let charset = Mht.get_charset page.header
+      let (output_dir, body) = 
+        if location = "main.htm" || location = "main.html"
+          then
+            let body = replace (page.body, src_pattern, "$1img/$2$3")
+            let body = replace (page.body, href_pattern, "$1img/$2$3")
+            let body = replace (body, pslide_pattern, "$1pslide/$2$3")
+            let body = replace (body, slide_pattern, "$1slide/$2$3")
+            (output_dir, body)
+          else
+            let body = replace (page.body, src_pattern, "$1../img/$2$3")
+            let body = replace (body, href_pattern, "$1../img/$2$3")
+            if is_pslide location
+              then
+                let body = replace (body, slide_pattern, "$1../slide/$2$3")
+                (pslide_dir, body)
+              else
+                let body = replace (body, pslide_pattern, "$1../pslide/$2$3")
+                (slide_dir, body)
+                
       use fs = File.Create(combine output_dir location)
-      fs.Write (charset.GetBytes page.body)
+      fs.Write (charset.GetBytes body)
     | "image" ->
       let location = Mht.get_location page.header
       match Mht.get_ctencode page.header with
-      | "base64" ->
-        page.body
-        |> (base64 >> decode >> write (combine output_dir location))
+      | "base64" -> page.body |> img_save_as (combine img_dir location)
       | _ -> ()
     | _ -> ()
 finally

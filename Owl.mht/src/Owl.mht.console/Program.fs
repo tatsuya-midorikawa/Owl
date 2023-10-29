@@ -105,19 +105,21 @@ try
         if location = "main.htm" || location = "main.html"
           then
             let body = replace (page.body, src_pattern, "$1img/$2$3")
-            let body = replace (page.body, href_pattern, "$1img/$2$3")
+            let body = replace (body, href_pattern, "$1img/$2$3")
             let body = replace (body, pslide_pattern, "$1pslide/$2$3")
             let body = replace (body, slide_pattern, "$1slide/$2$3")
             (output_dir, body)
+          elif location = "main.css" then
+            (output_dir, page.body)
           else
-            let body = replace (page.body, src_pattern, "$1../img/$2$3")
-            let body = replace (body, href_pattern, "$1../img/$2$3")
+            let body = replace (page.body, src_pattern, "$1img/$2$3")
+            let body = replace (body, href_pattern, "$1img/$2$3")
             if is_pslide location
               then
-                let body = replace (body, slide_pattern, "$1../slide/$2$3")
+                let body = replace (body, slide_pattern, "$1slide/$2$3")
                 (pslide_dir, body)
               else
-                let body = replace (body, pslide_pattern, "$1../pslide/$2$3")
+                let body = replace (body, pslide_pattern, "$1pslide/$2$3")
                 (slide_dir, body)
                 
       use fs = File.Create(combine output_dir location)

@@ -3,6 +3,9 @@ open Owl.mht.sonic
 open System.IO
 open System.Text.RegularExpressions
 
+open System.Threading.Tasks
+open System.Collections.Concurrent
+
 // let jpg = "base64 value"
 // let save_as = fpath "./output.jpg"
 // let target = jpg |> (base64 >> decode)
@@ -92,44 +95,87 @@ let [<Literal>] pslide_pattern = "(.*href=\")(pslide[0-9]*\.htm)(\".*)"
 
 let inline img_save_as dst = base64 >> decode >> write dst
 
-
-
 try
   let pages = Mht.read handle
-  for page in pages do
-    match Mht.get_mime page.header with
-    | "text" ->
-      let location = Mht.get_location page.header
-      let charset = Mht.get_charset page.header
-      let (output_dir, body) = 
-        if location = "main.htm" || location = "main.html"
-          then
-            let body = replace (page.body, src_pattern, "$1img/$2$3")
-            let body = replace (body, href_pattern, "$1img/$2$3")
-            let body = replace (body, pslide_pattern, "$1pslide/$2$3")
-            let body = replace (body, slide_pattern, "$1slide/$2$3")
-            (output_dir, body)
-          elif location = "main.css" then
-            (output_dir, page.body)
-          else
-            let body = replace (page.body, src_pattern, "$1img/$2$3")
-            let body = replace (body, href_pattern, "$1img/$2$3")
-            if is_pslide location
-              then
-                let body = replace (body, slide_pattern, "$1slide/$2$3")
-                (pslide_dir, body)
-              else
-                let body = replace (body, pslide_pattern, "$1pslide/$2$3")
-                (slide_dir, body)
+  Parallel.ForEach(
+    Partitioner.Create(0, pages.Count), 
+    fun (partition: int * int) ->
+      let (start', end') = partition
+      try
+        for i = start' to end' do
+          let page = pages[i]
+          match Mht.get_mime page.header with
+          | "text" ->
+            let location = Mht.get_location page.header
+            let charset = Mht.get_charset page.header
+            let (output_dir, body) = 
+              if location = "main.htm" || location = "main.html"
+                then
+                  let body = replace (page.body, src_pattern, "$1img/$2$3")
+                  let body = replace (body, href_pattern, "$1img/$2$3")
+                  let body = replace (body, pslide_pattern, "$1pslide/$2$3")
+                  let body = replace (body, slide_pattern, "$1slide/$2$3")
+                  (output_dir, body)
+                elif location = "main.css" then
+                  (output_dir, page.body)
+                else
+                  let body = replace (page.body, src_pattern, "$1img/$2$3")
+                  let body = replace (body, href_pattern, "$1img/$2$3")
+                  if is_pslide location
+                    then
+                      let body = replace (body, slide_pattern, "$1slide/$2$3")
+                      (pslide_dir, body)
+                    else
+                      let body = replace (body, pslide_pattern, "$1pslide/$2$3")
+                      (slide_dir, body)
+                      
+            use fs = File.Create(combine output_dir location)
+            fs.Write (charset.GetBytes body)
+          | "image" ->
+            let location = Mht.get_location page.header
+            match Mht.get_ctencode page.header with
+            | "base64" -> page.body |> img_save_as (combine img_dir location)
+            | _ -> ()
+          | _ -> ()
+      with _ -> ()
+    )
+  |> ignore
+
+
+  // for page in pages do
+  //   match Mht.get_mime page.header with
+  //   | "text" ->
+  //     let location = Mht.get_location page.header
+  //     let charset = Mht.get_charset page.header
+  //     let (output_dir, body) = 
+  //       if location = "main.htm" || location = "main.html"
+  //         then
+  //           let body = replace (page.body, src_pattern, "$1img/$2$3")
+  //           let body = replace (body, href_pattern, "$1img/$2$3")
+  //           let body = replace (body, pslide_pattern, "$1pslide/$2$3")
+  //           let body = replace (body, slide_pattern, "$1slide/$2$3")
+  //           (output_dir, body)
+  //         elif location = "main.css" then
+  //           (output_dir, page.body)
+  //         else
+  //           let body = replace (page.body, src_pattern, "$1img/$2$3")
+  //           let body = replace (body, href_pattern, "$1img/$2$3")
+  //           if is_pslide location
+  //             then
+  //               let body = replace (body, slide_pattern, "$1slide/$2$3")
+  //               (pslide_dir, body)
+  //             else
+  //               let body = replace (body, pslide_pattern, "$1pslide/$2$3")
+  //               (slide_dir, body)
                 
-      use fs = File.Create(combine output_dir location)
-      fs.Write (charset.GetBytes body)
-    | "image" ->
-      let location = Mht.get_location page.header
-      match Mht.get_ctencode page.header with
-      | "base64" -> page.body |> img_save_as (combine img_dir location)
-      | _ -> ()
-    | _ -> ()
+  //     use fs = File.Create(combine output_dir location)
+  //     fs.Write (charset.GetBytes body)
+  //   | "image" ->
+  //     let location = Mht.get_location page.header
+  //     match Mht.get_ctencode page.header with
+  //     | "base64" -> page.body |> img_save_as (combine img_dir location)
+  //     | _ -> ()
+  //   | _ -> ()
 finally
   ()
 

@@ -25,6 +25,18 @@
       "console": "internalConsole",
       "stopAtEntry": false,
       "internalConsoleOptions": "openOnSessionStart"
+    },
+    {
+      "name": "psr2html (Publish)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "psr2html-publish",
+      "program": "open",
+      "args": ["."],
+      "cwd": "${workspaceFolder}",
+      "console": "internalConsole",
+      "stopAtEntry": false,
+      "internalConsoleOptions": "openOnSessionStart"
     }
   ]
 }

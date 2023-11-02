@@ -20,6 +20,16 @@
         "reveal": "silent"
       },
       "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "psr2html-publish",
+      "command": "dotnet publish psr2html -r win-x64 --self-contained -c Release",
+      "type": "shell",
+      "group": "build",
+      "presentation": {
+        "reveal": "silent"
+      },
+      "problemMatcher": "$msCompile"
     }
   ]
 }

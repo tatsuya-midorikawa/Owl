@@ -9,6 +9,8 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Owl.mht.console", "Owl.mht.
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "psr2html", "psr2html\psr2html.fsproj", "{AA64323F-5678-41D0-8E59-623A88A0026F}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Owl.mht.core", "Owl.mht.core\Owl.mht.core.fsproj", "{0D3D447E-72CA-414F-A407-456BCB0AE91C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -30,5 +32,9 @@ Global
 		{AA64323F-5678-41D0-8E59-623A88A0026F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AA64323F-5678-41D0-8E59-623A88A0026F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AA64323F-5678-41D0-8E59-623A88A0026F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0D3D447E-72CA-414F-A407-456BCB0AE91C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0D3D447E-72CA-414F-A407-456BCB0AE91C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0D3D447E-72CA-414F-A407-456BCB0AE91C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0D3D447E-72CA-414F-A407-456BCB0AE91C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

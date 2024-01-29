@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.8.34309.116
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Owl.psrx", "Owl.psrx\Owl.psrx.csproj", "{C3552347-388F-4193-A273-9A8E2B3CB78F}"
+EndProject
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Owl.psrx.core", "Owl.psrx.core\Owl.psrx.core.fsproj", "{1F9BCA3A-4523-4B04-99A3-2B01E598405F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C3552347-388F-4193-A273-9A8E2B3CB78F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C3552347-388F-4193-A273-9A8E2B3CB78F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C3552347-388F-4193-A273-9A8E2B3CB78F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C3552347-388F-4193-A273-9A8E2B3CB78F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1F9BCA3A-4523-4B04-99A3-2B01E598405F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1F9BCA3A-4523-4B04-99A3-2B01E598405F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1F9BCA3A-4523-4B04-99A3-2B01E598405F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1F9BCA3A-4523-4B04-99A3-2B01E598405F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {1FB7EC9A-4EC8-4CEC-BCF7-EC57CF2475BB}
+	EndGlobalSection
+EndGlobal

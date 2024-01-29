@@ -49,18 +49,18 @@ public partial class MainForm : Form {
       var r = pwi.rcWindow;
       Debug.WriteLine($"    r.top= {r.top}, r.right= {r.right}, r.bottom= {r.bottom}, r.left= {r.left}");
       Debug.WriteLine($"    r'.top= {rect.top}, r'.right= {rect.right}, r'.bottom= {rect.bottom}, r'.left= {rect.left}");
-      //Point[] points = {
-      //    new Point(r.left, r.top),
-      //    new Point(r.right, r.top),
-      //    new Point(r.right, r.bottom),
-      //    new Point(r.left, r.bottom),
-      //  };
       Point[] points = {
-          new Point(405, 450),
-          new Point(921, 450),
-          new Point(921, 516),
-          new Point(405, 516),
+          new Point(r.left, r.top),
+          new Point(r.right, r.top),
+          new Point(r.right, r.bottom),
+          new Point(r.left, r.bottom),
         };
+      //Point[] points = {
+      //    new Point(405, 450),
+      //    new Point(921, 450),
+      //    new Point(921, 516),
+      //    new Point(405, 516),
+      //  };
       using var pen = new Pen(Color.Lime, 6);
       g.DrawPolygon(pen, points);
 
@@ -82,12 +82,14 @@ public partial class MainForm : Form {
   // Mouse Hook events Callback Function
   private IntPtr MouseHookProc(int nCode, IntPtr wParam, IntPtr lParam) {
     // When mouse event is fired.
-    if (state == State.Doing && 0 <= nCode && Marshal.PtrToStructure(lParam, typeof(User32.MsllHookStruct)) is User32.MsllHookStruct mhook) {
+    if (state == State.Doing
+        && 0 <= nCode
+        && Marshal.PtrToStructure(lParam, typeof(User32.MsllHookStruct)) is User32.MsllHookStruct mhook) {
       switch ((int)wParam) {
-        //case User32.WM_LBUTTONDOWN: // On left mouse button clicked.
-        //case User32.WM_RBUTTONDOWN: // On right mouse button clicked.
-        case User32.WM_LBUTTONUP: // On left mouse button clicked.
-        case User32.WM_RBUTTONUP: // On right mouse button clicked.
+        case User32.WM_LBUTTONDOWN: // On left mouse button clicked.
+        case User32.WM_RBUTTONDOWN: // On right mouse button clicked.
+        //case User32.WM_LBUTTONUP: // On left mouse button clicked.
+        //case User32.WM_RBUTTONUP: // On right mouse button clicked.
           Debug.WriteLine($"MouseHookProc:");
           var hwnd = User32.WindowFromPoint(mhook.pt);
           if (0 < User32.GetWindowThreadProcessId(hwnd, out uint pid) 

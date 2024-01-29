@@ -1,5 +1,8 @@
 namespace Owl.psrx;
 
+// Ref
+// https://learn.microsoft.com/ja-jp/windows/win32/gdi/positioning-objects-on-multiple-display-monitors
+
 using Owl.psrx.core;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
@@ -86,10 +89,10 @@ public partial class MainForm : Form {
         && 0 <= nCode
         && Marshal.PtrToStructure(lParam, typeof(User32.MsllHookStruct)) is User32.MsllHookStruct mhook) {
       switch ((int)wParam) {
-        case User32.WM_LBUTTONDOWN: // On left mouse button clicked.
-        case User32.WM_RBUTTONDOWN: // On right mouse button clicked.
-        //case User32.WM_LBUTTONUP: // On left mouse button clicked.
-        //case User32.WM_RBUTTONUP: // On right mouse button clicked.
+        //case User32.WM_LBUTTONDOWN: // On left mouse button clicked.
+        //case User32.WM_RBUTTONDOWN: // On right mouse button clicked.
+        case User32.WM_LBUTTONUP: // On left mouse button clicked.
+        case User32.WM_RBUTTONUP: // On right mouse button clicked.
           Debug.WriteLine($"MouseHookProc:");
           var hwnd = User32.WindowFromPoint(mhook.pt);
           if (0 < User32.GetWindowThreadProcessId(hwnd, out uint pid) 

@@ -7,6 +7,7 @@ using Owl.psrx.core;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 
 public partial class MainForm : Form {
 
@@ -35,18 +36,25 @@ public partial class MainForm : Form {
   private readonly string _tempPath = Path.GetTempPath();
   private string TempPath => Path.Combine(_tempPath, "psrx", id);
   private string TempSavePath(int steps) => Path.Combine(TempPath, "img", $"step_{steps}.jpg");
-  
-  private Task HookTask(nint hwnd, uint pid, User32.WindowInfo pwi, User32.Rect rect) {
+  private readonly Pen pen = new Pen(Color.Lime, 6);
+
+  private Task HookTask(nint hwnd) {
+  //private Task HookTask(nint hwnd, uint pid, User32.WindowInfo pwi) {
     return Task.Run(async () => {
       if (!settings.ScreenCaptureEnabled) {
+        return;
+      }
+
+      if (!(0 < User32.GetWindowThreadProcessId(hwnd, out uint pid)
+          && User32.GetWindowInfo(hwnd, out User32.WindowInfo pwi))) {
         return;
       }
 
       var dpi = User32.GetDpiForWindow(hwnd);
       var scale = system_dpi / dpi;
 
-      // Delay processing for few ms because the target window may not have come to the front.
-      await Task.Delay(1);
+      // Delay processing for several milliseconds because the target window may not have come to the front.
+      await Task.Delay(100);
 
       using var img = Window.capture_all_screen();
       using var p = Process.GetProcessById((int)pid);
@@ -76,7 +84,6 @@ public partial class MainForm : Form {
           new Point(left, bottom),
         };
 
-      using var pen = new Pen(Color.Lime, 6);
       g.DrawPolygon(pen, points);
 
       if (state == State.Doing) {
@@ -104,14 +111,10 @@ public partial class MainForm : Form {
         case User32.WM_LBUTTONUP: // On left mouse button clicked.
         case User32.WM_RBUTTONUP: // On right mouse button clicked.
           Debug.WriteLine($"MouseHookProc: x= {mhook.pt.X}, y= {mhook.pt.Y}");
+          // Heavy processing during Hook event will degrade overall system performance,
+          // so processing is performed as a separate task.
           var hwnd = User32.GetForegroundWindow();
-          if (0 < User32.GetWindowThreadProcessId(hwnd, out uint pid) 
-              && User32.GetWindowInfo(hwnd, out User32.WindowInfo pwi) 
-              && User32.GetWindowRect(hwnd, out User32.Rect r)) {
-            // Heavy processing during Hook event will degrade overall system performance,
-            // so processing is performed as a separate task.
-            tasks.Add(HookTask(hwnd, pid, pwi, r));
-          }
+          tasks.Add(HookTask(hwnd));
           break;
         default:
           break;
@@ -140,7 +143,6 @@ public partial class MainForm : Form {
       Debug.WriteLine("Mouse event hook failed.");
       Application.Exit();
     }
-
 
     this.Disposed += MainForm_Disposed;
   }
@@ -200,6 +202,5 @@ public partial class MainForm : Form {
       settingsForm.Set(cache);
     }
     settings = settingsForm.Settings;
-    Debug.WriteLine(r);
   }
 }

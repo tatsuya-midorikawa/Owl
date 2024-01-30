@@ -13,6 +13,8 @@ module User32 =
   let WM_RBUTTONDOWN = 0x0204
   [<Literal>]
   let WM_RBUTTONUP = 0x0205
+  [<Literal>]
+  let DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE = -3
   
   type HookProc = delegate of nCode: int * wParam: nativeint * lParam: nativeint -> nativeint
   
@@ -26,14 +28,14 @@ module User32 =
       
   [<Struct; StructLayout(LayoutKind.Sequential)>]
   type Rect =
-    val left: int
-    val top: int
-    val right: int
-    val bottom:int  
+    val mutable left: int
+    val mutable top: int
+    val mutable right: int
+    val mutable bottom:int  
 
   [<Struct; StructLayout(LayoutKind.Sequential)>]
   type WindowInfo =
-    val cbSize: int
+    val mutable cbSize: int
     val rcWindow: Rect
     val rcClient: Rect
     val dwStyle: int
@@ -82,6 +84,9 @@ module User32 =
   [<DllImport("user32.dll", EntryPoint="WindowFromPoint"); CompiledName("WindowFromPoint")>]
   extern nativeint windowFromPoint(System.Drawing.Point point)
   
+  [<DllImport("user32.dll", EntryPoint="WindowFromPhysicalPoint"); CompiledName("WindowFromPhysicalPoint")>]
+  extern nativeint windowFromPhysicalPoint([<In>] System.Drawing.Point point)
+  
   [<DllImport("user32.dll", EntryPoint="GetWindowThreadProcessId"); CompiledName("GetWindowThreadProcessId")>]
   extern uint getWindowThreadProcessId(nativeint hWnd, [<Out>] uint& lp);
   
@@ -99,6 +104,18 @@ module User32 =
     
   [<DllImport("user32.dll", EntryPoint="GetWindowInfo"); CompiledName("GetWindowInfo")>]
   extern bool getWindowInfo(nativeint hWnd, [<Out>] WindowInfo& pwi);
+    
+  [<DllImport("user32.dll", EntryPoint="GetDpiForWindow"); CompiledName("GetDpiForWindow")>]
+  extern int getDpiForWindow([<In>] nativeint hWnd);
+
+  [<DllImport("user32.dll", EntryPoint="GetDpiForSystem"); CompiledName("GetDpiForSystem")>]
+  extern int getDpiForSystem();
   
   [<DllImport("user32.dll", EntryPoint="EnumDisplaySettings"); CompiledName("EnumDisplaySettings")>]
   extern bool enumDisplaySettings(string lpszDeviceName, int iModeNum, [<Out>] DevMode& lpDevMode);
+
+  [<DllImport("user32.dll", EntryPoint="SetThreadDpiAwarenessContext"); CompiledName("SetThreadDpiAwarenessContext")>]
+  extern uint setThreadDpiAwarenessContext([<In>] int dpiCntext);
+
+  [<DllImport("user32.dll", EntryPoint="GetForegroundWindow"); CompiledName("GetForegroundWindow")>]
+  extern nativeint getForegroundWindow();

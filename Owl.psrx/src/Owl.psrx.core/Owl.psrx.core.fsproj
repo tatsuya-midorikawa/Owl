@@ -10,6 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="Shcore.fs" />
     <Compile Include="User32.fs" />
     <Compile Include="Window.fs" />
     <Compile Include="Jpg.fs" />

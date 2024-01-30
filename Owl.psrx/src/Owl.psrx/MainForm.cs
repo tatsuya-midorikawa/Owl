@@ -29,35 +29,44 @@ public partial class MainForm : Form {
   private readonly SettingsForm settingsForm = new();
   private Settings settings = new();
   private readonly Rectangle origin = Window.get_max_range();
+  private readonly double system_dpi = User32.GetDpiForSystem();
 
   private string SavePath => Path.GetFullPath($"./PSRx_{id}.zip");
   private readonly string _tempPath = Path.GetTempPath();
   private string TempPath => Path.Combine(_tempPath, "psrx", id);
   private string TempSavePath(int steps) => Path.Combine(TempPath, "img", $"step_{steps}.jpg");
   
-  private Task HookTask(uint pid, User32.WindowInfo pwi, User32.Rect rect) {
+  private Task HookTask(nint hwnd, uint pid, User32.WindowInfo pwi, User32.Rect rect) {
     return Task.Run(async () => {
       if (!settings.ScreenCaptureEnabled) {
         return;
       }
+
+      var dpi = User32.GetDpiForWindow(hwnd);
+      var scale = system_dpi / dpi;
 
       // Delay processing for few ms because the target window may not have come to the front.
       await Task.Delay(1);
 
       using var img = Window.capture_all_screen();
       using var p = Process.GetProcessById((int)pid);
-      Debug.WriteLine($"    {p.MainWindowTitle} ({p.ProcessName})");
+      Debug.WriteLine($"#   {p.MainWindowTitle} ({p.ProcessName})");
+      Debug.WriteLine($"    scale= {scale}");
 
       // Surround the operated application with Lime color.
       using var g = Graphics.FromImage(img);
-      var r = pwi.rcWindow;
+      var r = new User32.Rect {
+        top = (int)(pwi.rcWindow.top / scale),
+        left = (int)(pwi.rcWindow.left / scale),
+        bottom = (int)(pwi.rcWindow.bottom / scale),
+        right = (int)(pwi.rcWindow.right / scale)
+      };
       var top = Math.Abs(origin.Top - r.top);
       var left = Math.Abs(origin.Left - r.left);
       var right = Math.Abs(left + (r.right - r.left));
       var bottom = Math.Abs(top + (r.bottom - r.top));
 
-      Debug.WriteLine($"    r.top= {r.top}, r.right= {r.right}, r.bottom= {r.bottom}, r.left= {r.left}");
-      Debug.WriteLine($"    r'.top= {rect.top}, r'.right= {rect.right}, r'.bottom= {rect.bottom}, r'.left= {rect.left}");
+      Debug.WriteLine($"    r .top= {r.top}, r .right= {r.right}, r .bottom= {r.bottom}, r .left= {r.left}");
       Debug.WriteLine($"    top= {top}, right= {right}, bottom= {bottom}, left= {left}");
 
       Point[] points = {
@@ -67,18 +76,6 @@ public partial class MainForm : Form {
           new Point(left, bottom),
         };
 
-      //Point[] points = {
-      //    new Point(r.left, r.top),
-      //    new Point(r.right, r.top),
-      //    new Point(r.right, r.bottom),
-      //    new Point(r.left, r.bottom),
-      //  };
-      //Point[] points = {
-      //    new Point(405, 450),
-      //    new Point(921, 450),
-      //    new Point(921, 516),
-      //    new Point(405, 516),
-      //  };
       using var pen = new Pen(Color.Lime, 6);
       g.DrawPolygon(pen, points);
 
@@ -104,18 +101,16 @@ public partial class MainForm : Form {
         && 0 <= nCode
         && Marshal.PtrToStructure(lParam, typeof(User32.MsllHookStruct)) is User32.MsllHookStruct mhook) {
       switch ((int)wParam) {
-        //case User32.WM_LBUTTONDOWN: // On left mouse button clicked.
-        //case User32.WM_RBUTTONDOWN: // On right mouse button clicked.
         case User32.WM_LBUTTONUP: // On left mouse button clicked.
         case User32.WM_RBUTTONUP: // On right mouse button clicked.
-          Debug.WriteLine($"MouseHookProc:");
-          var hwnd = User32.WindowFromPoint(mhook.pt);
+          Debug.WriteLine($"MouseHookProc: x= {mhook.pt.X}, y= {mhook.pt.Y}");
+          var hwnd = User32.GetForegroundWindow();
           if (0 < User32.GetWindowThreadProcessId(hwnd, out uint pid) 
               && User32.GetWindowInfo(hwnd, out User32.WindowInfo pwi) 
               && User32.GetWindowRect(hwnd, out User32.Rect r)) {
             // Heavy processing during Hook event will degrade overall system performance,
             // so processing is performed as a separate task.
-            tasks.Add(HookTask(pid, pwi, r));
+            tasks.Add(HookTask(hwnd, pid, pwi, r));
           }
           break;
         default:

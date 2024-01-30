@@ -28,6 +28,7 @@ public partial class MainForm : Form {
 
   private readonly SettingsForm settingsForm = new();
   private Settings settings = new();
+  private readonly Rectangle origin = Window.get_max_range();
 
   private string SavePath => Path.GetFullPath($"./PSRx_{id}.zip");
   private readonly string _tempPath = Path.GetTempPath();
@@ -50,14 +51,28 @@ public partial class MainForm : Form {
       // Surround the operated application with Lime color.
       using var g = Graphics.FromImage(img);
       var r = pwi.rcWindow;
+      var top = Math.Abs(origin.Top - r.top);
+      var left = Math.Abs(origin.Left - r.left);
+      var right = Math.Abs(left + (r.right - r.left));
+      var bottom = Math.Abs(top + (r.bottom - r.top));
+
       Debug.WriteLine($"    r.top= {r.top}, r.right= {r.right}, r.bottom= {r.bottom}, r.left= {r.left}");
       Debug.WriteLine($"    r'.top= {rect.top}, r'.right= {rect.right}, r'.bottom= {rect.bottom}, r'.left= {rect.left}");
+      Debug.WriteLine($"    top= {top}, right= {right}, bottom= {bottom}, left= {left}");
+
       Point[] points = {
-          new Point(r.left, r.top),
-          new Point(r.right, r.top),
-          new Point(r.right, r.bottom),
-          new Point(r.left, r.bottom),
+          new Point(left, top),
+          new Point(right, top),
+          new Point(right, bottom),
+          new Point(left, bottom),
         };
+
+      //Point[] points = {
+      //    new Point(r.left, r.top),
+      //    new Point(r.right, r.top),
+      //    new Point(r.right, r.bottom),
+      //    new Point(r.left, r.bottom),
+      //  };
       //Point[] points = {
       //    new Point(405, 450),
       //    new Point(921, 450),

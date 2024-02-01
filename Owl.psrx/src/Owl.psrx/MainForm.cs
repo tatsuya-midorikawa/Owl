@@ -31,6 +31,7 @@ public partial class MainForm : Form {
   private Settings settings = new();
   private readonly Rectangle origin = Window.get_max_range();
   private readonly double system_dpi = User32.GetDpiForSystem();
+  private readonly string pname = Process.GetCurrentProcess().ProcessName;
 
   private string SavePath => Path.GetFullPath($"./PSRx_{id}.zip");
   private readonly string _tempPath = Path.GetTempPath();
@@ -56,10 +57,15 @@ public partial class MainForm : Form {
       // Delay processing for several milliseconds because the target window may not have come to the front.
       await Task.Delay(100);
 
-      using var img = Window.capture_all_screen();
       using var p = Process.GetProcessById((int)pid);
+      if (p.ProcessName == pname) {
+        // PSRX operations are not captured.
+        return;
+      }
+
+      using var img = Window.capture_all_screen();
       Debug.WriteLine($"#   {p.MainWindowTitle} ({p.ProcessName})");
-      Debug.WriteLine($"    scale= {scale}");
+      Debug.WriteLine($"    scale= {scale} (system dpi= {system_dpi} / dpi= {dpi})");
 
       // Surround the operated application with Lime color.
       using var g = Graphics.FromImage(img);
@@ -127,6 +133,9 @@ public partial class MainForm : Form {
 
   public MainForm() {
     InitializeComponent();
+
+    Shcore.SetProcessDpiAwareness(Shcore.PROCESS_PER_MONITOR_DPI_AWARE);
+    User32.SetThreadDpiAwarenessContext(User32.DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE);
 
     using var current = Process.GetCurrentProcess();
     id = $"{DateTime.Now:yyyyMMddHHmmss}_{current.Id}";

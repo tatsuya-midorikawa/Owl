@@ -15,7 +15,7 @@ module User32 =
   let WM_RBUTTONUP = 0x0205
   [<Literal>]
   let DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE = -3
-  
+    
   type HookProc = delegate of nCode: int * wParam: nativeint * lParam: nativeint -> nativeint
   
   [<Struct; StructLayout(LayoutKind.Sequential)>]

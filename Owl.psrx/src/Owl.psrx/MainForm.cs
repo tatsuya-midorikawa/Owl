@@ -40,7 +40,6 @@ public partial class MainForm : Form {
   private readonly Pen pen = new Pen(Color.Lime, 6);
 
   private Task HookTask(nint hwnd) {
-  //private Task HookTask(nint hwnd, uint pid, User32.WindowInfo pwi) {
     return Task.Run(async () => {
       if (!settings.ScreenCaptureEnabled) {
         return;

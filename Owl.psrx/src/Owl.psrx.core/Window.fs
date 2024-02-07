@@ -11,7 +11,7 @@ module Window =
 
   let all_screens = Screen.AllScreens
 
-  let inline get_max_range() =
+  let max_range =
     let max_range (r: Rectangle) (s: Screen) =
       let mutable dm = User32.DevMode()
       User32.enumDisplaySettings(s.DeviceName,  ENUM_CURRENT_SETTINGS, &dm) |> ignore
@@ -29,4 +29,4 @@ module Window =
     bitmap
 
   let inline capture_all_screen () =
-    get_max_range() |> capture
+    capture max_range

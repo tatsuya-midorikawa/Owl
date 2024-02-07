@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
+using System.Text;
 
 public partial class MainForm : Form {
 
@@ -24,90 +25,99 @@ public partial class MainForm : Form {
   private Task? saveTask;
   private int stepCount = -1;
   private readonly string id;
-  private readonly object capture_lock = new();
   private State state = State.Stop;
 
   private readonly SettingsForm settingsForm = new();
   private Settings settings = new();
-  private readonly Rectangle origin = Window.get_max_range();
+  private readonly Rectangle origin = Window.max_range;
   private readonly double system_dpi = User32.GetDpiForSystem();
   private readonly string pname = Process.GetCurrentProcess().ProcessName;
 
   private string SavePath => Path.GetFullPath($"./PSRx_{id}.zip");
   private readonly string _tempPath = Path.GetTempPath();
   private string TempPath => Path.Combine(_tempPath, "psrx", id);
-  private string TempSavePath(int steps) => Path.Combine(TempPath, "img", $"step_{steps}.jpg");
+  private string TempSaveImagePath(int steps) => Path.Combine(TempPath, "img", $"step_{steps}.jpg");
+  private string TempSaveHtmlPath => Path.Combine(TempPath, "index.html");
   private readonly Pen pen = new Pen(Color.Lime, 6);
 
-  private Task HookTask(nint hwnd) {
-    return Task.Run(async () => {
-      if (!settings.ScreenCaptureEnabled) {
-        return;
-      }
+  private readonly StringBuilder body = new StringBuilder(4096);
 
-      if (!(0 < User32.GetWindowThreadProcessId(hwnd, out uint pid)
-          && User32.GetWindowInfo(hwnd, out User32.WindowInfo pwi))) {
-        return;
-      }
+  private Task HookTask(nint hwnd, DateTime now, Bitmap img) {
+    return Task.Run(() => {
+      try {
 
-      var dpi = User32.GetDpiForWindow(hwnd);
-      var scale = system_dpi / dpi;
+        if (!settings.ScreenCaptureEnabled) {
+          return;
+        }
 
-      // Delay processing for several milliseconds because the target window may not have come to the front.
-      await Task.Delay(100);
+        if (!(0 < User32.GetWindowThreadProcessId(hwnd, out uint pid)
+            && User32.GetWindowInfo(hwnd, out User32.WindowInfo pwi))) {
+          return;
+        }
 
-      using var p = Process.GetProcessById((int)pid);
-      if (p.ProcessName == pname) {
-        // PSRX operations are not captured.
-        return;
-      }
+        var dpi = User32.GetDpiForWindow(hwnd);
+        var scale = system_dpi / dpi;
 
-      using var img = Window.capture_all_screen();
-      Debug.WriteLine($"#   {p.MainWindowTitle} ({p.ProcessName})");
-      Debug.WriteLine($"    scale= {scale} (system dpi= {system_dpi} / dpi= {dpi})");
+        using var p = Process.GetProcessById((int)pid);
+        if (p.ProcessName == pname) {
+          // PSRX operations are not captured.
+          return;
+        }
 
-      // Surround the operated application with Lime color.
-      using var g = Graphics.FromImage(img);
-      var r = new User32.Rect {
-        top = (int)(pwi.rcWindow.top / scale),
-        left = (int)(pwi.rcWindow.left / scale),
-        bottom = (int)(pwi.rcWindow.bottom / scale),
-        right = (int)(pwi.rcWindow.right / scale)
-      };
-      var top = Math.Abs(origin.Top - r.top);
-      var left = Math.Abs(origin.Left - r.left);
-      var right = Math.Abs(left + (r.right - r.left));
-      var bottom = Math.Abs(top + (r.bottom - r.top));
+        //using var img = Window.capture_all_screen();
+        var title = p.MainWindowTitle;
+        var name = p.ProcessName;
+        Debug.WriteLine($"#   {p.MainWindowTitle} ({p.ProcessName})");
+        Debug.WriteLine($"    scale= {scale} (system dpi= {system_dpi} / dpi= {dpi})");
 
-      Debug.WriteLine($"    r .top= {r.top}, r .right= {r.right}, r .bottom= {r.bottom}, r .left= {r.left}");
-      Debug.WriteLine($"    top= {top}, right= {right}, bottom= {bottom}, left= {left}");
+        // Surround the operated application with Lime color.
+        using var g = Graphics.FromImage(img);
+        var r = new User32.Rect {
+          top = (int)(pwi.rcWindow.top / scale),
+          left = (int)(pwi.rcWindow.left / scale),
+          bottom = (int)(pwi.rcWindow.bottom / scale),
+          right = (int)(pwi.rcWindow.right / scale)
+        };
+        var top = Math.Abs(origin.Top - r.top);
+        var left = Math.Abs(origin.Left - r.left);
+        var right = Math.Abs(left + (r.right - r.left));
+        var bottom = Math.Abs(top + (r.bottom - r.top));
 
-      Point[] points = {
+        Debug.WriteLine($"    r .top= {r.top}, r .right= {r.right}, r .bottom= {r.bottom}, r .left= {r.left}");
+        Debug.WriteLine($"    top= {top}, right= {right}, bottom= {bottom}, left= {left}");
+
+        Point[] points = {
           new Point(left, top),
           new Point(right, top),
           new Point(right, bottom),
           new Point(left, bottom),
         };
 
-      g.DrawPolygon(pen, points);
+        g.DrawPolygon(pen, points);
 
-      if (state == State.Doing) {
-        Jpg.save_as(TempSavePath(stepCount), img, 80);
+        if (state == State.Doing) {
+          Jpg.save_as(TempSaveImagePath(stepCount), img, 80);
+          body.Append(Html.MakeBodyContent(stepCount, title, name, now));
 
-        // If the maximum number of captures is exceeded,
-        // the oldest jpg file are deleted first.
-        if (settings.NumberOfRecentScreenCapturesToStore < stepCount) {
-          var target = TempSavePath(stepCount - settings.NumberOfRecentScreenCapturesToStore);
-          try { File.Delete(target); } catch (Exception) { /* ignore exception */ }
+          // If the maximum number of captures is exceeded,
+          // the oldest jpg file are deleted first.
+          if (settings.NumberOfRecentScreenCapturesToStore < stepCount) {
+            var target = TempSaveImagePath(stepCount - settings.NumberOfRecentScreenCapturesToStore);
+            try { File.Delete(target); } catch (Exception) { /* ignore exception */ }
+          }
+
+          ++stepCount;
         }
-
-        ++stepCount;
+      } finally {
+        img.Dispose();
       }
     });
   }
 
   // Mouse Hook events Callback Function
   private IntPtr MouseHookProc(int nCode, IntPtr wParam, IntPtr lParam) {
+    var now = DateTime.Now;
+    var img = Window.capture_all_screen();
     // When mouse event is fired.
     if (state == State.Doing
         && 0 <= nCode
@@ -115,11 +125,11 @@ public partial class MainForm : Form {
       switch ((int)wParam) {
         case User32.WM_LBUTTONUP: // On left mouse button clicked.
         case User32.WM_RBUTTONUP: // On right mouse button clicked.
-          Debug.WriteLine($"MouseHookProc: x= {mhook.pt.X}, y= {mhook.pt.Y}");
+          Debug.WriteLine($"MouseHookProc ({now:yyyy/MM/dd HH:mm:ss.fffff}): x= {mhook.pt.X}, y= {mhook.pt.Y}");
           // Heavy processing during Hook event will degrade overall system performance,
           // so processing is performed as a separate task.
           var hwnd = User32.GetForegroundWindow();
-          tasks.Add(HookTask(hwnd));
+          tasks.Add(HookTask(hwnd, now, img));
           break;
         default:
           break;
@@ -165,7 +175,7 @@ public partial class MainForm : Form {
 
   private void startRecBtn_Click(object sender, EventArgs e) {
 
-    var tmpDir = Path.GetDirectoryName(TempSavePath(-1)) ?? "";
+    var tmpDir = Path.GetDirectoryName(TempSaveImagePath(-1)) ?? "";
     if (!Directory.Exists(tmpDir)) {
       Directory.CreateDirectory(tmpDir);
     }
@@ -198,8 +208,17 @@ public partial class MainForm : Form {
 
     saveTask = Task.Run(() => {
       Task.WaitAll(tasks.ToArray());
+      // Create .html file
+      var content = Html.Build(body);
+      using (var writer = File.CreateText(TempSaveHtmlPath)) {
+        writer.Write(content);
+      }
+      body.Clear();
+      // Output ZIP file
       System.IO.Compression.ZipFile.CreateFromDirectory(TempPath, SavePath);
       Directory.Delete(TempPath, true);
+      // Open exprorer.exe
+      Process.Start("explorer.exe", Path.GetDirectoryName(SavePath)!);
     });
   }
 

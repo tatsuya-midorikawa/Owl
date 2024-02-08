@@ -117,7 +117,6 @@ public partial class MainForm : Form {
   // Mouse Hook events Callback Function
   private IntPtr MouseHookProc(int nCode, IntPtr wParam, IntPtr lParam) {
     var now = DateTime.Now;
-    var img = Window.capture_all_screen();
     // When mouse event is fired.
     if (state == State.Doing
         && 0 <= nCode
@@ -125,6 +124,7 @@ public partial class MainForm : Form {
       switch ((int)wParam) {
         case User32.WM_LBUTTONUP: // On left mouse button clicked.
         case User32.WM_RBUTTONUP: // On right mouse button clicked.
+          var img = Window.capture_all_screen();
           Debug.WriteLine($"MouseHookProc ({now:yyyy/MM/dd HH:mm:ss.fffff}): x= {mhook.pt.X}, y= {mhook.pt.Y}");
           // Heavy processing during Hook event will degrade overall system performance,
           // so processing is performed as a separate task.

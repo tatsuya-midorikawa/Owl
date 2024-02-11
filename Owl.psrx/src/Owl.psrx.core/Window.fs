@@ -10,6 +10,8 @@ module Window =
   let ENUM_CURRENT_SETTINGS = -1
 
   let all_screens = Screen.AllScreens
+  let system_dpi = User32.getDpiForSystem() |> float
+  let inline get_window_dpi hwnd = User32.getDpiForWindow(hwnd)
 
   let max_range =
     let max_range (r: Rectangle) (s: Screen) =

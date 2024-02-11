@@ -1,8 +1,5 @@
 namespace Owl.psrx;
 
-// Ref
-// https://learn.microsoft.com/ja-jp/windows/win32/gdi/positioning-objects-on-multiple-display-monitors
-
 using Owl.psrx.core;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
@@ -30,7 +27,6 @@ public partial class MainForm : Form {
   private readonly SettingsForm settingsForm = new();
   private Settings settings = new();
   private readonly Rectangle origin = Window.max_range;
-  private readonly double system_dpi = User32.GetDpiForSystem();
   private readonly string pname = Process.GetCurrentProcess().ProcessName;
 
   private string SavePath => Path.GetFullPath($"./PSRx_{id}.zip");
@@ -55,8 +51,8 @@ public partial class MainForm : Form {
           return;
         }
 
-        var dpi = User32.GetDpiForWindow(hwnd);
-        var scale = system_dpi / dpi;
+        var dpi = Window.get_window_dpi(hwnd);
+        var scale = Window.system_dpi / dpi;
 
         using var p = Process.GetProcessById((int)pid);
         if (p.ProcessName == pname) {
@@ -68,7 +64,7 @@ public partial class MainForm : Form {
         var title = p.MainWindowTitle;
         var name = p.ProcessName;
         Debug.WriteLine($"#   {p.MainWindowTitle} ({p.ProcessName})");
-        Debug.WriteLine($"    scale= {scale} (system dpi= {system_dpi} / dpi= {dpi})");
+        Debug.WriteLine($"    scale= {scale} (system dpi= {Window.system_dpi} / dpi= {dpi})");
 
         // Surround the operated application with Lime color.
         using var g = Graphics.FromImage(img);

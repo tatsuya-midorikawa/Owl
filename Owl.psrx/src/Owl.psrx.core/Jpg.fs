@@ -4,6 +4,20 @@ open System.Drawing
 open System.Drawing.Imaging
 
 module Jpg =
+  
+  let inline draw_rect (hwnd, img, wi: User32.Rect) =
+    let dpi = Window.get_window_dpi(hwnd)
+    let scale = Window.system_dpi / (float dpi)
+    use g = Graphics.FromImage(img)
+    let r = User32.Rect(
+      top= int ((float wi.top) / scale),
+      left= int ((float wi.left) / scale),
+      right= int ((float wi.right) / scale),
+      bottom= int ((float wi.bottom) / scale) )
+    ()
+
+
+
   // 'quality' is specified between 0 and 100.
   // 0 is the highest compression and 100 is the highest quality.
   let inline save_as (path: string) (bitmap: Bitmap, quality: int64) =
